@@ -452,7 +452,12 @@ function nse(sim,obs){
    ============================================================ */
 function setupCanvas(cv){
   const dpr=window.devicePixelRatio||1;
-  const w=cv.clientWidth||cv.width, h=cv.height;
+  // Anchor logical size on first call — cv.height is a pixel-buffer attribute
+  // that we mutate below, so reading it again next call would compound the DPR.
+  if(!cv.dataset.lh) cv.dataset.lh=cv.height;
+  if(!cv.dataset.lw) cv.dataset.lw=cv.width;
+  const h=+cv.dataset.lh;
+  const w=cv.clientWidth||+cv.dataset.lw;
   cv.width=w*dpr; cv.height=h*dpr; cv.style.height=h+"px";
   const ctx=cv.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0);
   return {ctx,w,h};

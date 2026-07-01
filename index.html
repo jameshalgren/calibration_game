@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hydrologic Calibration — Headwaters</title>
+<style>
+  :root{
+    --bg:#0b1118; --bg2:#111b27; --panel:#16222f; --panel2:#1c2c3d;
+    --ink:#e8f1f8; --muted:#8aa2b5; --line:#26384a;
+    --blue:#3da9fc; --blue2:#6fc3ff; --cyan:#54e6e0; --green:#54d6a0;
+    --amber:#ffc857; --red:#ff6b6b; --snow:#eaf6ff; --soil:#b88a5a;
+    --accent:#5ad1ff;
+    --radius:12px;
+    font-synthesis:none;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:radial-gradient(1200px 700px at 70% -10%, #16273a 0%, var(--bg) 60%);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  h1,h2,h3{font-weight:650;letter-spacing:.2px;margin:0}
+  a{color:var(--blue2)}
+  .wrap{max-width:1280px;margin:0 auto;padding:18px 20px 60px}
+  /* top nav */
+  nav{
+    position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:8px;
+    padding:10px 14px;margin:-18px -20px 18px;border-bottom:1px solid var(--line);
+    background:rgba(11,17,24,.82);backdrop-filter:blur(8px);
+  }
+  nav .brand{display:flex;align-items:center;gap:10px;font-weight:700;margin-right:8px}
+  nav .brand svg{filter:drop-shadow(0 2px 6px rgba(61,169,252,.4))}
+  nav .spacer{flex:1}
+  .navbtn{
+    border:1px solid transparent;background:transparent;color:var(--muted);
+    padding:8px 13px;border-radius:9px;cursor:pointer;font-size:13.5px;font-weight:600;
+    transition:.15s;
+  }
+  .navbtn:hover{color:var(--ink);background:var(--panel)}
+  .navbtn.active{color:var(--ink);background:var(--panel2);border-color:var(--line)}
+  /* views */
+  .view{display:none;animation:fade .35s ease}
+  .view.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .card{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+  .grid{display:grid;gap:16px}
+  .muted{color:var(--muted)}
+  .small{font-size:12.5px}
+  .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:700;border:1px solid var(--line)}
+
+  /* landing */
+  .hero{text-align:center;padding:34px 10px 8px}
+  .hero h1{font-size:34px;background:linear-gradient(90deg,var(--blue2),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p{color:var(--muted);max-width:680px;margin:12px auto 0;line-height:1.55}
+  .cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:26px}
+  .choice{cursor:pointer;position:relative;overflow:hidden;transition:.18s;min-height:220px;display:flex;flex-direction:column}
+  .choice:hover{transform:translateY(-4px);border-color:var(--accent);box-shadow:0 14px 40px -18px rgba(90,209,255,.6)}
+  .choice .svgtop{height:120px;border-radius:9px;background:#0c1622;border:1px solid var(--line);overflow:hidden;margin-bottom:12px}
+  .choice h3{font-size:17px;margin-bottom:6px}
+  .choice .go{margin-top:auto;color:var(--accent);font-weight:700;font-size:13px}
+
+  /* controls */
+  label.ctl{display:block;margin:13px 0 0}
+  .ctl .lab{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--muted);margin-bottom:5px}
+  .ctl .val{color:var(--blue2);font-variant-numeric:tabular-nums;font-weight:700}
+  input[type=range]{-webkit-appearance:none;width:100%;height:5px;border-radius:5px;background:var(--line);outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--blue);cursor:pointer;border:2px solid #0b1118;box-shadow:0 0 0 1px var(--blue)}
+  input[type=range]:disabled{opacity:.4}
+  input[type=range]:disabled::-webkit-slider-thumb{background:var(--muted);box-shadow:none;cursor:not-allowed}
+  select{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;width:100%}
+  .seg{display:flex;gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .seg button{flex:1;background:transparent;color:var(--muted);border:none;padding:7px 6px;cursor:pointer;font-size:12px;font-weight:600;transition:.12s}
+  .seg button.active{background:var(--blue);color:#06121d}
+  .seg button:not(.active):hover{background:var(--panel2);color:var(--ink)}
+  .btn{background:var(--blue);color:#06121d;border:none;border-radius:9px;padding:10px 15px;font-weight:700;cursor:pointer;font-size:13.5px;transition:.15s}
+  .btn:hover{filter:brightness(1.08)}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  .btn.ghost:hover{background:var(--panel2)}
+  .btn.warn{background:var(--amber);color:#23170a}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+  /* toggle switch */
+  .switch{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg2);margin-top:10px}
+  .switch .meta{font-size:12px;color:var(--muted);margin-top:2px}
+  .switch .tg{position:relative;width:46px;height:26px;border-radius:999px;background:#33475c;cursor:pointer;flex:none;transition:.18s}
+  .switch .tg::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.18s}
+  .switch.on .tg{background:var(--green)}
+  .switch.on .tg::after{left:23px}
+  .switch .name{font-weight:700;font-size:13.5px}
+
+  /* info icon + tooltip */
+  .info{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;border:1px solid var(--muted);color:var(--muted);font-size:10px;font-weight:800;cursor:help;margin-left:6px;position:relative;font-style:normal}
+  .info:hover{color:var(--accent);border-color:var(--accent)}
+  .info .tip{visibility:hidden;opacity:0;position:absolute;bottom:135%;left:50%;transform:translateX(-50%);width:240px;background:#0a131d;border:1px solid var(--accent);border-radius:8px;padding:9px 11px;font-size:11.5px;line-height:1.5;color:var(--ink);z-index:60;transition:.15s;box-shadow:0 10px 30px rgba(0,0,0,.5);text-align:left;font-weight:400;pointer-events:none}
+  .info:hover .tip{visibility:visible;opacity:1}
+  .info .tip::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--accent)}
+
+  /* banner */
+  .banner{border-left:4px solid var(--amber);background:linear-gradient(90deg,rgba(255,200,87,.14),transparent);padding:12px 16px;border-radius:8px;line-height:1.5;font-size:13.5px}
+  .banner.good{border-color:var(--green);background:linear-gradient(90deg,rgba(84,214,160,.14),transparent)}
+  .banner.bad{border-color:var(--red);background:linear-gradient(90deg,rgba(255,107,107,.14),transparent)}
+
+  /* layout split */
+  .split{display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start}
+  .split.wide{grid-template-columns:300px 1fr}
+  .panel-scroll{max-height:none}
+  canvas{display:block;width:100%}
+  .chartbox{background:#0a131d;border:1px solid var(--line);border-radius:10px;padding:10px}
+  .chart-title{font-size:12.5px;color:var(--muted);margin:0 0 6px;display:flex;justify-content:space-between;align-items:center}
+  .nse{font-size:13px;font-weight:800;font-variant-numeric:tabular-nums}
+  .metric{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg2);flex:1;min-width:120px}
+  .metric .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .metric .v{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+  hr.sep{border:none;border-top:1px solid var(--line);margin:16px 0}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .swatch{width:14px;height:3px;border-radius:3px;display:inline-block}
+  .group-title{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin:18px 0 4px;font-weight:800}
+  /* pong */
+  #pongCanvas{background:linear-gradient(180deg,#0a1726,#0b1d12);border-radius:10px;border:1px solid var(--line);cursor:none}
+  .warmword{font-size:26px;font-weight:800;letter-spacing:2px;color:var(--amber);font-variant:small-caps}
+  .typed{color:var(--green)}
+  kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px;font-size:11px;font-family:inherit}
+  @media(max-width:980px){.split,.split.wide{grid-template-columns:1fr}.cards3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="brand">
+    <svg width="22" height="22" viewBox="0 0 24 24"><path d="M3 20l5-9 4 5 3-5 6 9z" fill="#2b3f55"/><path d="M8 11l4 5 3-5-2-3z" fill="#eaf6ff"/><path d="M2 21h20" stroke="#3da9fc" stroke-width="1.5"/></svg>
+    Headwaters · Calibration
+  </div>
+  <span class="spacer"></span>
+  <span class="pill muted small">teaching toy · v3</span>
+</nav>
+<div class="wrap">
+<section id="calib" class="view active">
+  <div class="split wide">
+    <!-- LEFT: controls -->
+    <div class="card panel-scroll">
+      <h3 style="font-size:15px">Model Calibration</h3>
+      <div class="muted small">Match the hidden <strong>True</strong> hydrograph. The truth uses full physics &amp; the correct warm state.</div>
+
+      <div class="group-title">Climate & run</div>
+      <label class="ctl"><div class="lab"><span>Region preset</span></div>
+        <select id="cRegion">
+          <option value="rocky">Rocky Mountain — snowmelt dominated</option>
+          <option value="missouri">Eastern Missouri — humid, rain-driven</option>
+          <option value="sierra">California Sierras — rain/snow, dry summer</option>
+          <option value="tropics">Central Tropics — convective, high ET</option>
+        </select>
+      </label>
+      <label class="ctl"><div class="lab"><span>Run length</span></div>
+        <div class="seg" id="cScale">
+          <button data-v="event" class="active">Event scale (60 d)</button>
+          <button data-v="annual">Annual (365 d)</button>
+        </div>
+      </label>
+      <label class="ctl"><div class="lab"><span>Gage placement <i class="info">i<span class="tip">Each gage has its own True target and emphasizes different parameters. Upstream = pure runoff physics. Reservoir outflow = regulated releases. Confluence = regulated + unregulated tributary combined.</span></i></span></div>
+        <div class="seg" id="cGage">
+          <button data-v="up" class="active">Upstream</button>
+          <button data-v="res">Reservoir out</button>
+          <button data-v="conf">Confluence</button>
+        </div>
+      </label>
+
+      <div class="group-title">Snow — temperature-index <i class="info">i<span class="tip">Degree-day model: melt = DDF·(T−T₀) when T&gt;T₀. Elevation bands apply a lapse rate (colder up high); aspect splits melt (south slopes melt faster). The True run uses all bands + aspect.</span></i></div>
+      <div class="switch on" id="cBands" data-k="bands">
+        <div><div class="name">Elevation bands (low/mid/high)</div><div class="meta">OFF = uniform melt — the missing knob</div></div>
+        <div class="tg"></div>
+      </div>
+      <div class="switch on" id="cAspect" data-k="aspect">
+        <div><div class="name">Aspect (N/S slopes)</div><div class="meta">OFF = no solar split — the missing knob</div></div>
+        <div class="tg"></div>
+      </div>
+      <label class="ctl"><div class="lab"><span>Degree-day melt factor (DDF)</span><span class="val" id="vDDF"></span></div>
+        <input type="range" id="sDDF" min="1" max="8" step="0.1" value="4"></label>
+      <label class="ctl"><div class="lab"><span>Snow/rain temperature threshold</span><span class="val" id="vTsnow"></span></div>
+        <input type="range" id="sTsnow" min="-3" max="3" step="0.1" value="0.5"></label>
+
+      <div class="group-title">Soil — two-bucket <i class="info">i<span class="tip">Root zone handles infiltration, ET, and redistribution; deep groundwater handles baseflow recession. Rain+melt that can't infiltrate becomes quick runoff.</span></i></div>
+      <label class="ctl"><div class="lab"><span>Infiltration rate <i class="info">i<span class="tip">Max water/day the soil can absorb. Too low → unrealistic flashy peaks and near-zero summer baseflow.</span></i></span><span class="val" id="vInf"></span></div>
+        <input type="range" id="sInf" min="2" max="40" step="0.5" value="18"></label>
+      <label class="ctl"><div class="lab"><span>Storage capacity <i class="info">i<span class="tip">Root-zone volume. Set too high → the watershed acts like a sponge and never reaches the target confluence flow.</span></i></span><span class="val" id="vCap"></span></div>
+        <input type="range" id="sCap" min="40" max="320" step="5" value="150"></label>
+      <label class="ctl"><div class="lab"><span>Baseflow recession rate <i class="info">i<span class="tip">Linear-reservoir constant: baseflow = k·(groundwater storage). Higher = flashier baseflow; lower = long sustained recession.</span></i></span><span class="val" id="vBase"></span></div>
+        <input type="range" id="sBase" min="0.01" max="0.3" step="0.005" value="0.06"></label>
+      <label class="ctl"><div class="lab"><span>Evapotranspiration loss</span><span class="val" id="vET"></span></div>
+        <input type="range" id="sET" min="0" max="2.5" step="0.05" value="1"></label>
+      <label class="ctl"><div class="lab"><span>Inter-event redistribution <i class="info">i<span class="tip">Drainage of the root zone toward groundwater between storms — controls how the soil "resets" before the next event.</span></i></span><span class="val" id="vRedist"></span></div>
+        <input type="range" id="sRedist" min="0" max="0.4" step="0.005" value="0.08"></label>
+
+      <div class="group-title">Routing — fixed <i class="info">i<span class="tip">Simple Lag/K routing (travel-time lag + linear-reservoir attenuation). Not tunable here — channel roughness/velocity/lag tuning is reserved for an advanced flood-mapping version. Reservoir releases are the routing knob that matters, in FIRO mode.</span></i></div>
+      <div class="small muted">Lag/K routing is held fixed in this version.</div>
+
+      <div class="group-title">Prior states (warm vs cold) <i class="info">i<span class="tip">Percent of each storage's full capacity at t=0. The True run starts from the correct balanced warm state. A wrong start cannot be fixed by any slider during warm-up.</span></i></div>
+      <label class="ctl"><div class="lab"><span>Initial soil moisture</span><span class="val" id="vSoil0"></span></div>
+        <input type="range" id="sSoil0" min="0" max="4" step="1" value="2"></label>
+      <label class="ctl"><div class="lab"><span>Initial channel storage</span><span class="val" id="vChan0"></span></div>
+        <input type="range" id="sChan0" min="0" max="4" step="1" value="2"></label>
+
+      <hr class="sep">
+      <div class="row">
+        <button class="btn" id="cAutoTrue">Reveal best-possible fit</button>
+        <button class="btn ghost" id="cReset">Reset knobs</button>
+      </div>
+      <div class="small muted" style="margin-top:8px">“Best-possible fit” auto-tunes the soil/snow sliders — proving that with a knob missing or a wrong warm state, the NSE still won't recover.</div>
+    </div>
+
+    <!-- RIGHT: viz + charts -->
+    <div class="grid">
+      <div class="card" style="padding:10px">
+        <div id="watershed"></div>
+      </div>
+      <div class="card">
+        <div class="row" style="justify-content:space-between;margin-bottom:8px">
+          <div class="row">
+            <div class="metric" style="min-width:130px"><span class="k">Nash–Sutcliffe (NSE)</span><span class="v" id="nseVal">—</span></div>
+            <div class="metric" style="min-width:110px"><span class="k">Verdict</span><span class="v" id="nseVerdict" style="font-size:15px">—</span></div>
+          </div>
+          <div class="legend">
+            <span><span class="swatch" style="background:var(--blue2)"></span> Simulated</span>
+            <span><span class="swatch" style="background:var(--amber)"></span> True</span>
+          </div>
+        </div>
+        <div id="calibBanner" class="banner small" style="margin-bottom:10px"></div>
+        <div class="chartbox"><div class="chart-title"><span>Streamflow hydrograph — Simulated vs True (m³/s)</span></div><canvas id="chFlow" width="900" height="260"></canvas></div>
+        <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:12px">
+          <div class="chartbox"><div class="chart-title">Snow water equivalent (SWE, mm)</div><canvas id="chSWE" width="440" height="150"></canvas></div>
+          <div class="chartbox"><div class="chart-title">Soil moisture &amp; ET (mm)</div><canvas id="chSoil" width="440" height="150"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+<script>
+"use strict";
+/* ============================================================
+   Utilities
+   ============================================================ */
+function $(id){return document.getElementById(id);}
+function clamp(x,a,b){return x<a?a:x>b?b:x;}
+function lerp(a,b,t){return a+(b-a)*t;}
+// seeded PRNG (mulberry32) so True & Sim share identical weather forcing
+function mulberry32(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+
+/* ============================================================
+   CLIMATE — synthetic weather generators
+   Returns daily arrays {temp[], precip[]} of length N.
+   temp: seasonal sine + noise (lapse handled per-band in snow model)
+   precip: region-appropriate stochastic storms.
+   dayOffset lets event/annual scales start in the right season.
+   ============================================================ */
+const REGIONS={
+  rocky:{name:"Rocky Mountain",baseT:2,ampT:14,wetSummer:.15,stormP:.18,stormMag:22,snowy:true,et:0.8,phase:-10},
+  missouri:{name:"Eastern Missouri",baseT:13,ampT:13,wetSummer:1.0,stormP:.32,stormMag:30,snowy:false,et:1.4,phase:0},
+  sierra:{name:"California Sierras",baseT:9,ampT:12,wetSummer:.05,stormP:.16,stormMag:34,snowy:true,et:1.1,phase:5},
+  tropics:{name:"Central Tropics",baseT:26,ampT:2.5,wetSummer:1.0,stormP:.55,stormMag:18,snowy:false,et:2.4,phase:0}
+};
+function genWeather(regionKey,N,seed,scale){
+  const R=REGIONS[regionKey], rnd=mulberry32(seed);
+  const temp=new Array(N), precip=new Array(N);
+  // annual: full year starting ~Oct(snow accum) ; event: start spring melt/storm season
+  const startDay = scale==="annual" ? 274 : (R.snowy?60:150); // day-of-year
+  for(let i=0;i<N;i++){
+    const doy=(startDay+i)%365;
+    const season=Math.sin((doy/365)*2*Math.PI - 1.3 + R.phase*0.0); // winter low
+    const t=R.baseT + R.ampT*season + (rnd()-0.5)*4;
+    temp[i]=t;
+    // storm occurrence — more in cool/wet season except tropics(uniform) & missouri(summer convective)
+    let seasonalWet;
+    if(regionKey==="tropics") seasonalWet=0.8+0.4*Math.sin(doy/365*2*Math.PI);
+    else if(regionKey==="missouri") seasonalWet=0.6+0.8*Math.max(0,Math.sin((doy/365)*2*Math.PI+1.0));
+    else seasonalWet=lerp(R.wetSummer,1.3,clamp(0.5-0.5*season,0,1)); // wet in cool season
+    let p=0;
+    if(rnd() < R.stormP*seasonalWet){
+      p = R.stormMag*(0.3+rnd()*1.4)*seasonalWet;
+    }
+    precip[i]=p;
+  }
+  return {temp,precip,R};
+}
+
+
+/* ============================================================
+   SNOW — temperature-index (degree-day) model
+   Per band b: T_b = T - lapse*dz_b ; melt=DDF_aspect*(T_b - Tsnow)+
+   accumulation when T_b<=Tsnow. Aspect splits area N/S with melt mult.
+   Returns daily liquid input (rain + melt) and SWE series (area-weighted).
+   ============================================================ */
+function snowModel(temp,precip,opts){
+  const N=temp.length;
+  // band setup
+  let bands;
+  if(opts.bands){
+    bands=[{dz:-6,area:0.34},{dz:0,area:0.34},{dz:7,area:0.32}]; // low warmer, high colder (dz= -temp offset sign): use +dz cools
+  }else{
+    bands=[{dz:0,area:1.0}];
+  }
+  let aspects;
+  if(opts.aspect){
+    // North-facing slopes hold a slow, late-melting reserve; south-facing melt fast & early.
+    // The two-timescale melt shape can't be reproduced by a single uniform melt rate — that's the trap.
+    aspects=[{mult:0.4,area:0.5},{mult:1.4,area:0.5}]; // N slow/retained, S fast/early
+  }else{
+    aspects=[{mult:1.0,area:1.0}];
+  }
+  const lapse=0.6; // °C per band-step unit of dz
+  const swe={}; // swe[bi][ai]
+  bands.forEach((b,bi)=>{swe[bi]={};aspects.forEach((a,ai)=>swe[bi][ai]=opts.swe0||0);});
+  const liquid=new Array(N).fill(0);
+  const sweSeries=new Array(N).fill(0);
+  for(let i=0;i<N;i++){
+    let totLiquid=0, totSWE=0;
+    bands.forEach((b,bi)=>{
+      const Tb=temp[i]-lapse*b.dz;
+      aspects.forEach((a,ai)=>{
+        const area=b.area*a.area;
+        let s=swe[bi][ai];
+        const isSnow = Tb<=opts.tsnow;
+        const pSnow = isSnow?precip[i]:0;
+        const pRain = isSnow?0:precip[i];
+        s+=pSnow;
+        let melt=0;
+        if(Tb>opts.tsnow && s>0){
+          melt=Math.min(s, opts.ddf*a.mult*(Tb-opts.tsnow));
+          s-=melt;
+        }
+        swe[bi][ai]=s;
+        totLiquid += (pRain+melt)*area;
+        totSWE += s*area;
+      });
+    });
+    liquid[i]=totLiquid; sweSeries[i]=totSWE;
+  }
+  return {liquid,swe:sweSeries};
+}
+
+
+/* ============================================================
+   SOIL — two-bucket (root zone + deep groundwater)
+   liquid -> infiltration (cap by rate & remaining storage) -> root zone
+   root zone: ET loss + redistribution(percolation) to groundwater
+   groundwater: baseflow = k*storage (linear reservoir)
+   surface excess = quick runoff. Total local runoff = quick + baseflow.
+   ============================================================ */
+function soilModel(liquid,etDemand,opts){
+  const N=liquid.length;
+  let root=opts.soil0*opts.cap; // initial soil moisture (fraction*cap)
+  let gw=opts.gw0!==undefined?opts.gw0:20;
+  const runoff=new Array(N), soilSeries=new Array(N), etSeries=new Array(N);
+  for(let i=0;i<N;i++){
+    const water=liquid[i];
+    // infiltration limited by rate and remaining capacity
+    const room=Math.max(0,opts.cap-root);
+    const infil=Math.min(water, opts.inf, room);
+    const excess=water-infil; // quick surface runoff
+    root+=infil;
+    // ET (limited by available moisture & demand scaled by saturation)
+    const et=Math.min(root, opts.et*etDemand[i]*(0.3+0.7*root/opts.cap));
+    root-=et;
+    // redistribution: root -> groundwater (drainage)
+    const drain=opts.redist*root;
+    root-=drain; gw+=drain;
+    // overflow if root exceeds cap (saturation excess)
+    let satEx=0;
+    if(root>opts.cap){satEx=root-opts.cap;root=opts.cap;}
+    // baseflow from groundwater
+    const base=opts.base*gw; gw-=base;
+    runoff[i]=excess+satEx+base;
+    soilSeries[i]=root; etSeries[i]=et;
+  }
+  return {runoff,soil:soilSeries,et:etSeries};
+}
+
+
+/* ============================================================
+   ROUTING — Lag/K (fixed). Pure lag (shift) + linear reservoir K.
+   O_t = O_{t-1} + (I_lag - O_{t-1}) * dt/(K+dt)
+   Reservoir gage applies regulated release; confluence adds tributary.
+   ============================================================ */
+function routeLagK(inflow,lag,K){
+  const N=inflow.length;
+  // pure travel-time lag: shift forward, zero-pad the front (don't repeat inflow[0])
+  const lagged=new Array(N);
+  for(let i=0;i<N;i++)lagged[i]= (i-lag>=0)?inflow[i-lag]:0;
+  // linear-reservoir attenuation (Muskingum-style smoother): O_t = O_{t-1} + (I-O_{t-1})/(K+1)
+  const out=new Array(N); let prev=0;
+  for(let i=0;i<N;i++){prev=prev+(lagged[i]-prev)*(1/(K+1));out[i]=prev;}
+  return out;
+}
+
+
+/* ============================================================
+   FULL WATERSHED SIM  (mm/day -> m³/s scaling factor)
+   gage: 'up' | 'res' | 'conf'
+   ============================================================ */
+const MM2CMS=3.5; // catchment scaling: mm/day runoff -> m³/s (keeps all gages on a comparable scale)
+function simulate(cfg){
+  const N=cfg.N;
+  const sn=snowModel(cfg.weather.temp,cfg.weather.precip,{
+    bands:cfg.bands,aspect:cfg.aspect,ddf:cfg.ddf,tsnow:cfg.tsnow,swe0:cfg.swe0});
+  // ET demand proxy: warm-season potential
+  const etDemand=cfg.weather.temp.map(t=>clamp(t/22,0,1.5)*cfg.weather.R.et);
+  const so=soilModel(sn.liquid,etDemand,{
+    inf:cfg.inf,cap:cfg.cap,base:cfg.base,et:cfg.et,redist:cfg.redist,
+    soil0:cfg.soil0,gw0:cfg.gw0});
+  // natural runoff routed
+  const natural=routeLagK(so.runoff.map(r=>r*MM2CMS), 2, 3);
+
+  // tributary (unregulated, joins below reservoir) — a second smaller catchment
+  const trib=routeLagK(so.runoff.map(r=>r*MM2CMS*0.55), 1, 2);
+
+  // reservoir: fills from natural inflow, releases via an operating rule that
+  // mostly passes inflow and gently nudges storage toward a 70%-full target.
+  // This keeps releases on the same scale as inflow (so all gages are comparable)
+  // and keeps the regulated gages responsive to the upstream calibration knobs.
+  const resOut=new Array(N), resVolSeries=new Array(N);
+  const target=0.7*RES_CAP; let vol=clamp(cfg.chan0,0,1)*RES_CAP;
+  for(let i=0;i<N;i++){
+    vol+=natural[i];
+    let rel = 0.9*natural[i] + (vol-target)*0.06;   // pass inflow + storage correction
+    if(vol>RES_CAP*0.92) rel = Math.max(rel, vol-RES_CAP*0.92); // emergency spill
+    rel = clamp(rel, 3, vol);                        // min ecological release, can't release empty
+    vol -= rel;
+    resOut[i]=rel; resVolSeries[i]=vol;
+  }
+  let series;
+  if(cfg.gage==="up") series=natural;
+  else if(cfg.gage==="res") series=resOut;
+  else series=resOut.map((r,i)=>r+trib[i]); // confluence
+
+  return {flow:series,swe:sn.swe,soil:so.soil,et:so.et,natural,resOut,trib,resVol:resVolSeries};
+}
+const RES_CAP=600; // reservoir capacity in (m³/s)-days — sized ~30 days of mean inflow
+
+/* NSE */
+function nse(sim,obs){
+  let n=sim.length, mean=0; for(let i=0;i<n;i++)mean+=obs[i]; mean/=n;
+  let num=0,den=0; for(let i=0;i<n;i++){num+=(obs[i]-sim[i])**2;den+=(obs[i]-mean)**2;}
+  return den===0?0:1-num/den;
+}
+
+
+/* ============================================================
+   CANVAS LINE CHART helper (handles HiDPI)
+   ============================================================ */
+function setupCanvas(cv){
+  const dpr=window.devicePixelRatio||1;
+  const w=cv.clientWidth||cv.width, h=cv.height;
+  cv.width=w*dpr; cv.height=h*dpr; cv.style.height=h+"px";
+  const ctx=cv.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {ctx,w,h};
+}
+function drawChart(cv,sets,opts){
+  opts=opts||{};
+  const {ctx,w,h}=setupCanvas(cv);
+  ctx.clearRect(0,0,w,h);
+  const pad={l:42,r:10,t:10,b:20};
+  const N=opts.N||(sets[0]?sets[0].data.length:0);
+  let max=opts.max, min=opts.min!==undefined?opts.min:0;
+  if(max===undefined||!Number.isFinite(max)){max=1e-6;sets.forEach(s=>s.data.forEach(v=>{if(Number.isFinite(v)&&v>max)max=v;}));max*=1.12;}
+  if(opts.envHi)opts.envHi.forEach(v=>{if(Number.isFinite(v)&&v>max)max=v*1.05;});
+  if(!Number.isFinite(max)||max<=min)max=min+1;
+  const top=pad.t, bot=h-pad.b;
+  const X=i=>pad.l+(w-pad.l-pad.r)*(N<=1?0:i/(N-1));
+  const Yraw=v=>h-pad.b-(h-pad.t-pad.b)*((v-min)/(max-min||1));
+  const Y=v=>clamp(Yraw(v),top,bot); // keep drawing inside the plot area (spikes ride the edge, never vanish)
+  // grid + y labels
+  ctx.strokeStyle="#1d2c3c";ctx.fillStyle="#6a8198";ctx.font="10px -apple-system,sans-serif";ctx.lineWidth=1;
+  for(let g=0;g<=4;g++){const v=min+(max-min)*g/4;const y=Y(v);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(w-pad.r,y);ctx.stroke();ctx.fillText(v.toFixed(v<10?1:0),4,y+3);}
+  // shaded bands (e.g. supply band)
+  (opts.bands||[]).forEach(b=>{ctx.fillStyle=b.color;ctx.fillRect(pad.l,Y(b.hi),w-pad.l-pad.r,Y(b.lo)-Y(b.hi));});
+  // horizontal threshold lines
+  (opts.hlines||[]).forEach(l=>{ctx.strokeStyle=l.color;ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(pad.l,Y(l.v));ctx.lineTo(w-pad.r,Y(l.v));ctx.stroke();ctx.setLineDash([]);});
+  // envelope
+  if(opts.envHi&&opts.envLo){
+    ctx.fillStyle=opts.envColor||"rgba(255,200,87,.18)";
+    ctx.beginPath();
+    for(let i=0;i<opts.envHi.length;i++){const x=X((opts.envStart||0)+i);i===0?ctx.moveTo(x,Y(opts.envHi[i])):ctx.lineTo(x,Y(opts.envHi[i]));}
+    for(let i=opts.envLo.length-1;i>=0;i--){const x=X((opts.envStart||0)+i);ctx.lineTo(x,Y(opts.envLo[i]));}
+    ctx.closePath();ctx.fill();
+  }
+  // series
+  sets.forEach(s=>{
+    if(s.type==="bar"){
+      ctx.fillStyle=s.color;
+      const bw=Math.max(1,(w-pad.l-pad.r)/N*0.6);
+      s.data.forEach((v,i)=>{if(v>0){const x=X(i);ctx.fillRect(x-bw/2,Y(v),bw,Y(min)-Y(v));}});
+      return;
+    }
+    ctx.strokeStyle=s.color;ctx.lineWidth=s.w||2;
+    if(s.dash)ctx.setLineDash(s.dash);else ctx.setLineDash([]);
+    ctx.beginPath();
+    const off=s.start||0;
+    let pen=false; // lift the pen across non-finite points so one bad value can't break/blank the path
+    s.data.forEach((v,i)=>{
+      if(!Number.isFinite(v)){pen=false;return;}
+      const x=X(off+i),y=Y(v);
+      if(!pen){ctx.moveTo(x,y);pen=true;}else ctx.lineTo(x,y);
+    });
+    ctx.stroke();ctx.setLineDash([]);
+    if(s.dot){const i=s.data.length-1;const dv=s.data[i];if(Number.isFinite(dv)){ctx.fillStyle=s.color;ctx.beginPath();ctx.arc(X(off+i),Y(dv),3,0,7);ctx.fill();}}
+  });
+}
+
+
+/* ============================================================
+   WATERSHED SVG (shared builder)
+   state: {swe(0-1), resLevel(0-1), flow(0-1), gateOpen(0-1), season, snowDeep}
+   ============================================================ */
+function watershedSVG(){
+  return `
+  <svg viewBox="0 0 760 360" width="100%" style="display:block;border-radius:8px;background:linear-gradient(180deg,#0c1b2e 0%,#12263a 55%,#16331f 100%)">
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16314e"/><stop offset="1" stop-color="#1b3a2a"/></linearGradient>
+      <linearGradient id="water" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5ec6ff"/><stop offset="1" stop-color="#1e6fb0"/></linearGradient>
+    </defs>
+    <!-- sun/moon -->
+    <circle id="ws-sun" cx="660" cy="60" r="22" fill="#ffd86b" opacity=".9"/>
+    <!-- mountains with elevation bands -->
+    <polygon points="0,210 120,70 240,210" fill="#2a3a4d"/>
+    <polygon points="150,210 300,40 450,210" fill="#33485e"/>
+    <polygon points="360,210 470,95 580,210" fill="#2a3a4d"/>
+    <!-- snow caps (3 separate, by elevation band) -->
+    <polygon id="snowHi" points="300,40 268,90 332,90" fill="#eaf6ff"/>
+    <polygon id="snowMid" points="268,90 250,118 350,118 332,90" fill="#d4ebff" opacity=".9"/>
+    <polygon id="snowLowA" points="120,70 95,108 145,108" fill="#eaf6ff"/>
+    <polygon id="snowLowB" points="470,95 448,128 492,128" fill="#eaf6ff"/>
+    <!-- headwater streams -->
+    <path id="strA" d="M120,150 C150,200 180,230 250,250" stroke="#3da9fc" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path id="strB" d="M300,150 C320,200 320,235 300,255" stroke="#3da9fc" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path id="strC" d="M470,150 C440,200 400,235 360,258" stroke="#3da9fc" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <!-- reservoir -->
+    <rect x="250" y="248" width="150" height="60" rx="6" fill="#0c2236" stroke="#2b4a66"/>
+    <rect id="resWater" x="252" y="270" width="146" height="36" rx="4" fill="url(#water)"/>
+    <!-- dam -->
+    <rect x="398" y="246" width="12" height="64" fill="#3a4b5e"/>
+    <!-- gate -->
+    <rect id="gate" x="404" y="288" width="6" height="14" fill="#ffd86b"/>
+    <!-- below-dam channel + tributary + confluence -->
+    <path id="relStream" d="M410,300 C460,305 500,310 560,318" stroke="#3da9fc" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <path id="tribStream" d="M600,150 C580,230 560,290 560,318" stroke="#3da9fc" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <circle cx="560" cy="318" r="4" fill="#6fc3ff"/>
+    <path id="confStream" d="M560,318 C620,326 700,330 760,332" stroke="#3da9fc" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <!-- meadow critters -->
+    <g id="deer" opacity="0"><ellipse cx="90" cy="320" rx="10" ry="5" fill="#9b6b3f"/><rect x="86" y="308" width="3" height="10" fill="#9b6b3f"/><circle cx="98" cy="306" r="4" fill="#9b6b3f"/></g>
+    <g id="bfly" opacity="0"><path d="M180,300 q-7,-8 0,-4 q7,-4 0,4" fill="#ffc857"/></g>
+    <g id="fish" opacity="0"><ellipse cx="320" cy="292" rx="7" ry="3" fill="#54e6e0"/><polygon points="313,292 307,288 307,296" fill="#54e6e0"/></g>
+    <g id="kayak" opacity="0"><ellipse cx="300" cy="284" rx="11" ry="3.5" fill="#ff6b6b"/><circle cx="300" cy="280" r="3" fill="#ffe0b0"/></g>
+    <g id="skier" opacity="0"><circle cx="300" cy="70" r="3" fill="#fff"/><rect x="299" y="73" width="2" height="7" fill="#3da9fc"/><line x1="294" y1="82" x2="306" y2="80" stroke="#fff" stroke-width="1.5"/></g>
+    <g id="hare" opacity="0"><ellipse cx="150" cy="100" rx="5" ry="3" fill="#eaf6ff"/><rect x="151" y="93" width="1.6" height="7" fill="#eaf6ff"/><rect x="148" y="93" width="1.6" height="7" fill="#eaf6ff"/></g>
+    <!-- gage marker -->
+    <g id="gageMark" opacity="0"><line id="gageLine" x1="0" y1="0" x2="0" y2="0" stroke="#54e6e0" stroke-width="2" stroke-dasharray="3,3"/><circle id="gageDot" r="6" fill="none" stroke="#54e6e0" stroke-width="2"/><text id="gageTxt" font-size="9" fill="#54e6e0" font-weight="700"></text></g>
+    <text x="14" y="24" font-size="11" fill="#7d97ac">live watershed schematic</text>
+  </svg>`;
+}
+function updateWatershed(root,st){
+  const q=s=>root.querySelector(s);
+  // snow cover by band (high persists longest)
+  const swe=clamp(st.swe,0,1);
+  q("#snowHi").style.opacity = clamp(swe*1.6,0,1);
+  q("#snowMid").style.opacity = clamp(swe*1.3-0.1,0,1);
+  q("#snowLowA").style.opacity = clamp(swe*1.0-0.35,0,1);
+  q("#snowLowB").style.opacity = clamp(swe*1.0-0.35,0,1);
+  // reservoir level
+  const top=248+4, full=56;
+  const lv=clamp(st.resLevel,0,1);
+  const hgt=6+full*lv;
+  const y=top+full- (hgt-6);
+  const rw=q("#resWater"); rw.setAttribute("y",y); rw.setAttribute("height",hgt);
+  rw.setAttribute("fill", st.flood?"#ff8a6b":"url(#water)");
+  // gate open
+  const g=q("#gate"); g.setAttribute("height",4+12*clamp(st.gateOpen,0,1));
+  // stream hue intensity by flow (stay blue, vary brightness/width)
+  const f=clamp(st.flow,0,1);
+  const col=`rgb(${Math.round(40+lerp(0,40,f))},${Math.round(120+lerp(0,90,f))},${Math.round(180+lerp(0,70,f))})`;
+  ["#strA","#strB","#strC","#relStream","#confStream","#tribStream"].forEach(s=>{const e=q(s);e.setAttribute("stroke",col);});
+  q("#confStream").setAttribute("stroke-width",4+7*f);
+  q("#relStream").setAttribute("stroke-width",3+5*clamp(st.gateOpen,0,1));
+  // critters by season/state
+  const spring=st.season==="spring",summer=st.season==="summer",winter=st.season==="winter";
+  q("#deer").style.opacity = (!winter)?0.95:0;
+  q("#bfly").style.opacity = spring?1:0;
+  q("#fish").style.opacity = (lv>0.4&&!winter)?0.9:0;
+  q("#kayak").style.opacity = (lv>0.6&&summer)?0.95:0;
+  q("#skier").style.opacity = (st.snowDeep)?0.95:0;
+  q("#hare").style.opacity = (st.snowDeep)?0.9:0;
+  q("#ws-sun").setAttribute("fill", winter?"#cfe3ff":"#ffd86b");
+  // gage marker
+  if(st.gage){
+    const pos={up:[250,250,"UP"],res:[404,300,"RES"],conf:[560,318,"CONF"]}[st.gage];
+    const gm=q("#gageMark");gm.style.opacity=1;
+    q("#gageDot").setAttribute("cx",pos[0]);q("#gageDot").setAttribute("cy",pos[1]);
+    const gl=q("#gageLine");gl.setAttribute("x1",pos[0]);gl.setAttribute("x2",pos[0]);gl.setAttribute("y1",pos[1]-26);gl.setAttribute("y2",pos[1]-8);
+    const tx=q("#gageTxt");tx.setAttribute("x",pos[0]-8);tx.setAttribute("y",pos[1]-30);tx.textContent="▼ gage "+pos[2];
+  }else if(q("#gageMark")){q("#gageMark").style.opacity=0;}
+}
+
+
+/* ============================================================
+   CALIBRATION wiring
+   ============================================================ */
+const calib=(function(){
+  let scale="event",gage="up";
+  function bind(id,fmt,fn){const el=$(id);const upd=()=>{if(fmt)$(fmt).textContent=fn?fn(el.value):el.value;runCalibrationDebounced();};el.addEventListener("input",upd);return upd;}
+  const fmts=[
+    ["sDDF","vDDF",v=>(+v).toFixed(1)+" mm/°C·d"],
+    ["sTsnow","vTsnow",v=>(+v).toFixed(1)+" °C"],
+    ["sInf","vInf",v=>(+v).toFixed(0)+" mm/d"],
+    ["sCap","vCap",v=>(+v).toFixed(0)+" mm"],
+    ["sBase","vBase",v=>(+v).toFixed(3)],
+    ["sET","vET",v=>(+v).toFixed(2)],
+    ["sRedist","vRedist",v=>(+v).toFixed(3)],
+    ["sSoil0","vSoil0",v=>["0%","25%","50%","75%","100%"][v]],
+    ["sChan0","vChan0",v=>["0%","25%","50%","75%","100%"][v]],
+  ];
+  const updaters=fmts.map(([a,b,f])=>bind(a,b,f));
+  // toggles
+  [["cBands","bands"],["cAspect","aspect"]].forEach(([id])=>{
+    $(id).addEventListener("click",()=>{$(id).classList.toggle("on");runCalibration();});
+  });
+  // segmented
+  $("cScale").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{
+    $("cScale").querySelectorAll("button").forEach(x=>x.classList.remove("active"));b.classList.add("active");scale=b.dataset.v;runCalibration();}));
+  $("cGage").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{
+    $("cGage").querySelectorAll("button").forEach(x=>x.classList.remove("active"));b.classList.add("active");gage=b.dataset.v;runCalibration();}));
+  $("cRegion").addEventListener("change",runCalibration);
+  $("cReset").addEventListener("click",()=>{
+    const defs={sDDF:4,sTsnow:0.5,sInf:18,sCap:150,sBase:0.06,sET:1,sRedist:0.08,sSoil0:2,sChan0:2};
+    for(const k in defs)$(k).value=defs[k];
+    $("cBands").classList.add("on");$("cAspect").classList.add("on");
+    updaters.forEach(u=>{});fmts.forEach(([a,b,f])=>$(b).textContent=f($(a).value));
+    runCalibration();
+  });
+  $("cAutoTrue").addEventListener("click",()=>{
+    // auto-tune soil/snow toward truth (but cannot fix missing knobs / wrong warm state)
+    $("sDDF").value=4.2;$("sTsnow").value=0.4;$("sInf").value=20;$("sCap").value=140;$("sBase").value=0.07;$("sET").value=1.0;$("sRedist").value=0.09;
+    fmts.forEach(([a,b,f])=>$(b).textContent=f($(a).value));
+    runCalibration(true);
+  });
+  function getCfg(){
+    return {
+      region:$("cRegion").value, scale, gage,
+      bands:$("cBands").classList.contains("on"),
+      aspect:$("cAspect").classList.contains("on"),
+      ddf:+$("sDDF").value, tsnow:+$("sTsnow").value,
+      inf:+$("sInf").value, cap:+$("sCap").value, base:+$("sBase").value,
+      et:+$("sET").value, redist:+$("sRedist").value,
+      soil0:[0,.25,.5,.75,1][+$("sSoil0").value],
+      chan0:[0,.25,.5,.75,1][+$("sChan0").value],
+    };
+  }
+  function initLabels(){fmts.forEach(([a,b,f])=>$(b).textContent=f($(a).value));}
+  return {getCfg,initLabels,getScale:()=>scale,getGage:()=>gage};
+})();
+calib.initLabels();
+
+let calibTimer=null;
+function runCalibrationDebounced(){clearTimeout(calibTimer);calibTimer=setTimeout(()=>runCalibration(),60);}
+
+function runCalibration(autoMsg){
+  if(!$("calib").classList.contains("active"))return;
+  const c=calib.getCfg();
+  const N=c.scale==="annual"?365:60;
+  const seed=({rocky:11,missouri:22,sierra:33,tropics:44}[c.region])+(c.scale==="annual"?100:0);
+  const weather=genWeather(c.region,N,seed,c.scale);
+  // TRUE config: full physics, correct warm state
+  const trueCfg={N,weather,bands:true,aspect:true,ddf:4.2,tsnow:0.4,
+    inf:20,cap:140,base:0.07,et:1.0,redist:0.09,soil0:0.5,chan0:0.5,swe0: c.scale==="annual"?0:60,gw0:25,gage:c.gage};
+  const simCfg={N,weather,bands:c.bands,aspect:c.aspect,ddf:c.ddf,tsnow:c.tsnow,
+    inf:c.inf,cap:c.cap,base:c.base,et:c.et,redist:c.redist,soil0:c.soil0,chan0:c.chan0,
+    swe0:c.scale==="annual"?0:60,gw0:25,gage:c.gage};
+  const T=simulate(trueCfg), S=simulate(simCfg);
+  const score=nse(S.flow,T.flow);
+
+  // Stable y-axes: anchor to the FIXED True series (+ headroom) so the axis does
+  // not jump or squash the True line as the player drags sliders. The Simulated
+  // line may exceed it — drawChart clamps it to ride the top edge instead of
+  // exploding the scale. Allow growth up to 2.5x True if the sim is genuinely high.
+  const fmax=a=>{let m=0;for(const v of a)if(Number.isFinite(v)&&v>m)m=v;return m;};
+  const tF=fmax(T.flow), sF=fmax(S.flow);
+  const flowMax=Math.max(tF, Math.min(sF, tF*2.5))*1.18 || 1;
+  const tS=fmax(T.swe), sS=fmax(S.swe);
+  const sweMax=Math.max(tS, Math.min(sS, Math.max(tS,1)*2))*1.2 || 1;
+
+  drawChart($("chFlow"),[
+    {data:T.flow,color:"#ffc857",w:2.4},
+    {data:S.flow,color:"#6fc3ff",w:2,dash:[5,4]},
+  ],{N,max:flowMax});
+  drawChart($("chSWE"),[
+    {data:T.swe,color:"#cfe3ff",w:1.8},
+    {data:S.swe,color:"#6fc3ff",w:1.6,dash:[4,3]},
+  ],{N,max:sweMax});
+  drawChart($("chSoil"),[
+    {data:T.soil,color:"#b88a5a",w:1.8},
+    {data:S.soil,color:"#54d6a0",w:1.6,dash:[4,3]},
+    {data:S.et,color:"#ff9e6b",w:1.4},
+  ],{N,max:330}); // fixed to the storage-capacity slider max so it never rescales
+
+  // NSE display
+  const nv=$("nseVal"),verdict=$("nseVerdict");
+  nv.textContent=score.toFixed(3);
+  let col,vtxt,vc;
+  if(score>0.8){col="var(--green)";vtxt="Excellent";vc="var(--green)";}
+  else if(score>0.5){col="var(--amber)";vtxt="Fair";vc="var(--amber)";}
+  else{col="var(--red)";vtxt="Poor";vc="var(--red)";}
+  nv.style.color=col;verdict.textContent=vtxt;verdict.style.color=vc;
+
+  // diagnostic banner — name the missing knob / wrong state
+  const b=$("calibBanner");
+  const reasons=[];
+  if(!c.bands)reasons.push("<strong>Elevation bands are OFF</strong> — melt is uniform, so the snowmelt limb can't match the multi-band truth");
+  if(!c.aspect)reasons.push("<strong>Aspect is OFF</strong> — no N/S solar split, so melt timing is wrong");
+  if(c.soil0<0.5-1e-9)reasons.push("a <strong>cold/dry soil start</strong> — early flow stays low while the truth is already flowing, and no slider fixes a wrong warm-up state");
+  if(c.chan0<0.5-1e-9)reasons.push("a <strong>low initial channel storage</strong> — the system starts behind the truth");
+  if(score>0.8){
+    b.className="banner good small";
+    b.innerHTML="✅ Strong match. The knobs are present and the warm state is right — now tuning actually works.";
+  }else if(reasons.length){
+    b.className="banner bad small";
+    b.innerHTML="🔧 The NSE is held down by structural problems, not just slider values: "+reasons.join("; ")+". This is the calibration trap — the <em>missing knob</em>, not the wrong knob.";
+  }else{
+    b.className="banner small";
+    b.innerHTML="Knobs present &amp; warm state correct — keep tuning soil/snow sliders to push the NSE up.";
+  }
+  if(autoMsg){
+    b.className="banner bad small";
+    b.innerHTML="Auto-tuned the soil &amp; snow sliders to their best values. "+(reasons.length?("But "+reasons.length+" structural issue(s) remain ("+ (!c.bands||!c.aspect?"missing physics knob":"wrong warm state") +"), so NSE still can't recover. Turn the right knobs ON / fix the prior state."):"With knobs on and the warm state right, the fit is strong.");
+  }
+
+  // watershed viz state from end-of-run
+  const last=N-1;
+  const maxFlow=Math.max(fmax(T.flow),1);
+  const maxRes=Math.max(fmax(T.resOut),1);
+  const doy=( (c.scale==="annual"?274:(REGIONS[c.region].snowy?60:150)) +last)%365;
+  let season="summer";
+  if(doy>330||doy<60)season="winter";else if(doy<150)season="spring";else if(doy>270)season="fall";
+  const sweNorm=clamp(S.swe[last]/120,0,1);
+  updateWatershed($("watershed"),{
+    swe:sweNorm,
+    resLevel:clamp(T.resVol[last]/RES_CAP,0,1),
+    flow:clamp(S.flow[last]/maxFlow,0,1),
+    gateOpen:c.gage==="res"||c.gage==="conf"?clamp(T.resOut[last]/maxRes,0,1):0.3,
+    season, snowDeep:sweNorm>0.5, gage:c.gage,
+    flood:false
+  });
+}
+$("watershed").innerHTML=watershedSVG();
+
+
+/* boot */
+runCalibration();
+window.addEventListener("resize",()=>runCalibration());
+</script>
+</body>
+</html>

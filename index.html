@@ -159,13 +159,6 @@
           <button data-v="annual">Annual (365 d)</button>
         </div>
       </label>
-      <label class="ctl"><div class="lab"><span>Gage placement <i class="info">i<span class="tip">Each gage has its own True target and emphasizes different parameters. Upstream = pure runoff physics. Reservoir outflow = regulated releases. Confluence = regulated + unregulated tributary combined.</span></i></span></div>
-        <div class="seg" id="cGage">
-          <button data-v="up" class="active">Upstream</button>
-          <button data-v="res">Reservoir out</button>
-          <button data-v="conf">Confluence</button>
-        </div>
-      </label>
 
       <div class="group-title">Snow — temperature-index <i class="info">i<span class="tip">Degree-day model: melt = DDF·(T−T₀) when T&gt;T₀. Elevation bands apply a lapse rate (colder up high); aspect splits melt (south slopes melt faster). The True run uses all bands + aspect.</span></i></div>
       <div class="switch on" id="cBands" data-k="bands">
@@ -173,27 +166,27 @@
         <div class="tg"></div>
       </div>
       <div class="switch on" id="cAspect" data-k="aspect">
-        <div><div class="name">Aspect (N/S slopes)</div><div class="meta">OFF = no solar split — the missing knob</div></div>
+        <div><div class="name">Aspect (N/S slopes) <i class="info">i<span class="tip">A pure degree-day model has no explicit energy-flux term — so how can aspect matter? Here aspect is applied as a melt-rate multiplier: north-facing slopes × 0.4 (slow, retained late), south-facing × 1.4 (fast, early). That's a lumped stand-in for differential solar exposure. The resulting two-timescale melt shape is exactly what a single uniform melt rate can't reproduce — which is why toggling aspect moves the NSE.</span></i></div><div class="meta">OFF = no solar split — the missing knob</div></div>
         <div class="tg"></div>
       </div>
-      <label class="ctl"><div class="lab"><span>Degree-day melt factor (DDF)</span><span class="val" id="vDDF"></span></div>
+      <label class="ctl"><div class="lab"><span>Degree-day melt factor (DDF) <i class="info">i<span class="tip">Degree-day factor: melt = DDF·(T − T₀) for each °C the air sits above the snow/rain threshold T₀. Higher DDF melts the pack faster once it's above freezing; too high and the melt limb spikes early and runs dry.</span></i></span><span class="val" id="vDDF"></span></div>
         <input type="range" id="sDDF" min="1" max="8" step="0.1" value="4"></label>
-      <label class="ctl"><div class="lab"><span>Snow/rain temperature threshold</span><span class="val" id="vTsnow"></span></div>
+      <label class="ctl"><div class="lab"><span>Snow/rain temperature threshold <i class="info">i<span class="tip">The temperature that divides snow from rain, and the cutoff below which no melt occurs. Nudging it shifts both the timing and the volume of the melt-driven rise. This is an approximation because different energy dynamics may permit melt above or below the given temperature.</span></i></span><span class="val" id="vTsnow"></span></div>
         <input type="range" id="sTsnow" min="-3" max="3" step="0.1" value="0.5"></label>
 
       <div class="group-title">Soil — two-bucket <i class="info">i<span class="tip">Root zone handles infiltration, ET, and redistribution; deep groundwater handles baseflow recession. Rain+melt that can't infiltrate becomes quick runoff.</span></i></div>
       <label class="ctl"><div class="lab"><span>Infiltration rate <i class="info">i<span class="tip">Max water/day the soil can absorb. Too low → unrealistic flashy peaks and near-zero summer baseflow.</span></i></span><span class="val" id="vInf"></span></div>
         <input type="range" id="sInf" min="2" max="40" step="0.5" value="18"></label>
-      <label class="ctl"><div class="lab"><span>Storage capacity <i class="info">i<span class="tip">Root-zone volume. Set too high → the watershed acts like a sponge and never reaches the target confluence flow.</span></i></span><span class="val" id="vCap"></span></div>
+      <label class="ctl"><div class="lab"><span>Storage capacity <i class="info">i<span class="tip">Root-zone volume. Set too high → the watershed acts like a sponge and never reaches the target outlet flow.</span></i></span><span class="val" id="vCap"></span></div>
         <input type="range" id="sCap" min="40" max="320" step="5" value="150"></label>
       <label class="ctl"><div class="lab"><span>Baseflow recession rate <i class="info">i<span class="tip">Linear-reservoir constant: baseflow = k·(groundwater storage). Higher = flashier baseflow; lower = long sustained recession.</span></i></span><span class="val" id="vBase"></span></div>
         <input type="range" id="sBase" min="0.01" max="0.3" step="0.005" value="0.06"></label>
-      <label class="ctl"><div class="lab"><span>Evapotranspiration loss</span><span class="val" id="vET"></span></div>
+      <label class="ctl"><div class="lab"><span>Evapotranspiration loss <i class="info">i<span class="tip">Scales the evapotranspiration demand drawn from the root zone. Higher ET lowers summer baseflow; set it too high and the whole hydrograph sits below the truth.</span></i></span><span class="val" id="vET"></span></div>
         <input type="range" id="sET" min="0" max="2.5" step="0.05" value="1"></label>
       <label class="ctl"><div class="lab"><span>Inter-event redistribution <i class="info">i<span class="tip">Drainage of the root zone toward groundwater between storms — controls how the soil "resets" before the next event.</span></i></span><span class="val" id="vRedist"></span></div>
         <input type="range" id="sRedist" min="0" max="0.4" step="0.005" value="0.08"></label>
 
-      <div class="group-title">Routing — fixed <i class="info">i<span class="tip">Simple Lag/K routing (travel-time lag + linear-reservoir attenuation). Not tunable here — channel roughness/velocity/lag tuning is reserved for an advanced flood-mapping version. Reservoir releases are the routing knob that matters, in FIRO mode.</span></i></div>
+      <div class="group-title">Routing — fixed <i class="info">i<span class="tip">Simple Lag/K routing (travel-time lag + linear-reservoir attenuation). Not tunable here — channel roughness/velocity/lag tuning is reserved for an advanced flood-mapping version.</span></i></div>
       <div class="small muted">Lag/K routing is held fixed in this version.</div>
 
       <div class="group-title">Prior states (warm vs cold) <i class="info">i<span class="tip">Percent of each storage's full capacity at t=0. The True run starts from the correct balanced warm state. A wrong start cannot be fixed by any slider during warm-up.</span></i></div>
@@ -382,7 +375,6 @@ function soilModel(liquid,etDemand,opts){
 /* ============================================================
    ROUTING — Lag/K (fixed). Pure lag (shift) + linear reservoir K.
    O_t = O_{t-1} + (I_lag - O_{t-1}) * dt/(K+dt)
-   Reservoir gage applies regulated release; confluence adds tributary.
    ============================================================ */
 function routeLagK(inflow,lag,K){
   const N=inflow.length;
@@ -397,12 +389,11 @@ function routeLagK(inflow,lag,K){
 
 
 /* ============================================================
-   FULL WATERSHED SIM  (mm/day -> m³/s scaling factor)
-   gage: 'up' | 'res' | 'conf'
+   HEADWATER SIM  (mm/day -> m³/s scaling factor)
+   Single gage at the catchment outlet: natural runoff, routed.
    ============================================================ */
-const MM2CMS=3.5; // catchment scaling: mm/day runoff -> m³/s (keeps all gages on a comparable scale)
+const MM2CMS=3.5; // catchment scaling: mm/day runoff -> m³/s
 function simulate(cfg){
-  const N=cfg.N;
   const sn=snowModel(cfg.weather.temp,cfg.weather.precip,{
     bands:cfg.bands,aspect:cfg.aspect,ddf:cfg.ddf,tsnow:cfg.tsnow,swe0:cfg.swe0});
   // ET demand proxy: warm-season potential
@@ -410,34 +401,10 @@ function simulate(cfg){
   const so=soilModel(sn.liquid,etDemand,{
     inf:cfg.inf,cap:cfg.cap,base:cfg.base,et:cfg.et,redist:cfg.redist,
     soil0:cfg.soil0,gw0:cfg.gw0});
-  // natural runoff routed
-  const natural=routeLagK(so.runoff.map(r=>r*MM2CMS), 2, 3);
-
-  // tributary (unregulated, joins below reservoir) — a second smaller catchment
-  const trib=routeLagK(so.runoff.map(r=>r*MM2CMS*0.55), 1, 2);
-
-  // reservoir: fills from natural inflow, releases via an operating rule that
-  // mostly passes inflow and gently nudges storage toward a 70%-full target.
-  // This keeps releases on the same scale as inflow (so all gages are comparable)
-  // and keeps the regulated gages responsive to the upstream calibration knobs.
-  const resOut=new Array(N), resVolSeries=new Array(N);
-  const target=0.7*RES_CAP; let vol=clamp(cfg.chan0,0,1)*RES_CAP;
-  for(let i=0;i<N;i++){
-    vol+=natural[i];
-    let rel = 0.9*natural[i] + (vol-target)*0.06;   // pass inflow + storage correction
-    if(vol>RES_CAP*0.92) rel = Math.max(rel, vol-RES_CAP*0.92); // emergency spill
-    rel = clamp(rel, 3, vol);                        // min ecological release, can't release empty
-    vol -= rel;
-    resOut[i]=rel; resVolSeries[i]=vol;
-  }
-  let series;
-  if(cfg.gage==="up") series=natural;
-  else if(cfg.gage==="res") series=resOut;
-  else series=resOut.map((r,i)=>r+trib[i]); // confluence
-
-  return {flow:series,swe:sn.swe,soil:so.soil,et:so.et,natural,resOut,trib,resVol:resVolSeries};
+  // natural runoff routed to the outlet (Lag/K, fixed)
+  const flow=routeLagK(so.runoff.map(r=>r*MM2CMS), 2, 3);
+  return {flow,swe:sn.swe,soil:so.soil,et:so.et};
 }
-const RES_CAP=600; // reservoir capacity in (m³/s)-days — sized ~30 days of mean inflow
 
 /* NSE */
 function nse(sim,obs){
@@ -517,15 +484,11 @@ function drawChart(cv,sets,opts){
 
 /* ============================================================
    WATERSHED SVG (shared builder)
-   state: {swe(0-1), resLevel(0-1), flow(0-1), gateOpen(0-1), season, snowDeep}
+   state: {swe(0-1), flow(0-1), season, snowDeep}
    ============================================================ */
 function watershedSVG(){
   return `
   <svg viewBox="0 0 760 360" width="100%" style="display:block;border-radius:8px;background:linear-gradient(180deg,#0c1b2e 0%,#12263a 55%,#16331f 100%)">
-    <defs>
-      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16314e"/><stop offset="1" stop-color="#1b3a2a"/></linearGradient>
-      <linearGradient id="water" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5ec6ff"/><stop offset="1" stop-color="#1e6fb0"/></linearGradient>
-    </defs>
     <!-- sun/moon -->
     <circle id="ws-sun" cx="660" cy="60" r="22" fill="#ffd86b" opacity=".9"/>
     <!-- mountains with elevation bands -->
@@ -537,32 +500,19 @@ function watershedSVG(){
     <polygon id="snowMid" points="268,90 250,118 350,118 332,90" fill="#d4ebff" opacity=".9"/>
     <polygon id="snowLowA" points="120,70 95,108 145,108" fill="#eaf6ff"/>
     <polygon id="snowLowB" points="470,95 448,128 492,128" fill="#eaf6ff"/>
-    <!-- headwater streams -->
-    <path id="strA" d="M120,150 C150,200 180,230 250,250" stroke="#3da9fc" stroke-width="5" fill="none" stroke-linecap="round"/>
-    <path id="strB" d="M300,150 C320,200 320,235 300,255" stroke="#3da9fc" stroke-width="5" fill="none" stroke-linecap="round"/>
-    <path id="strC" d="M470,150 C440,200 400,235 360,258" stroke="#3da9fc" stroke-width="5" fill="none" stroke-linecap="round"/>
-    <!-- reservoir -->
-    <rect x="250" y="248" width="150" height="60" rx="6" fill="#0c2236" stroke="#2b4a66"/>
-    <rect id="resWater" x="252" y="270" width="146" height="36" rx="4" fill="url(#water)"/>
-    <!-- dam -->
-    <rect x="398" y="246" width="12" height="64" fill="#3a4b5e"/>
-    <!-- gate -->
-    <rect id="gate" x="404" y="288" width="6" height="14" fill="#ffd86b"/>
-    <!-- below-dam channel + tributary + confluence -->
-    <path id="relStream" d="M410,300 C460,305 500,310 560,318" stroke="#3da9fc" stroke-width="6" fill="none" stroke-linecap="round"/>
-    <path id="tribStream" d="M600,150 C580,230 560,290 560,318" stroke="#3da9fc" stroke-width="4" fill="none" stroke-linecap="round"/>
-    <circle cx="560" cy="318" r="4" fill="#6fc3ff"/>
-    <path id="confStream" d="M560,318 C620,326 700,330 760,332" stroke="#3da9fc" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <!-- headwater streams converging to a single main stem + outlet -->
+    <path id="strA" d="M120,150 C160,200 240,235 330,265" stroke="#3da9fc" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path id="strB" d="M300,150 C315,200 322,235 330,265" stroke="#3da9fc" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path id="strC" d="M470,150 C430,200 370,240 330,265" stroke="#3da9fc" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path id="mainStem" d="M330,265 C420,300 500,318 600,332" stroke="#3da9fc" stroke-width="8" fill="none" stroke-linecap="round"/>
     <!-- meadow critters -->
     <g id="deer" opacity="0"><ellipse cx="90" cy="320" rx="10" ry="5" fill="#9b6b3f"/><rect x="86" y="308" width="3" height="10" fill="#9b6b3f"/><circle cx="98" cy="306" r="4" fill="#9b6b3f"/></g>
     <g id="bfly" opacity="0"><path d="M180,300 q-7,-8 0,-4 q7,-4 0,4" fill="#ffc857"/></g>
-    <g id="fish" opacity="0"><ellipse cx="320" cy="292" rx="7" ry="3" fill="#54e6e0"/><polygon points="313,292 307,288 307,296" fill="#54e6e0"/></g>
-    <g id="kayak" opacity="0"><ellipse cx="300" cy="284" rx="11" ry="3.5" fill="#ff6b6b"/><circle cx="300" cy="280" r="3" fill="#ffe0b0"/></g>
     <g id="skier" opacity="0"><circle cx="300" cy="70" r="3" fill="#fff"/><rect x="299" y="73" width="2" height="7" fill="#3da9fc"/><line x1="294" y1="82" x2="306" y2="80" stroke="#fff" stroke-width="1.5"/></g>
     <g id="hare" opacity="0"><ellipse cx="150" cy="100" rx="5" ry="3" fill="#eaf6ff"/><rect x="151" y="93" width="1.6" height="7" fill="#eaf6ff"/><rect x="148" y="93" width="1.6" height="7" fill="#eaf6ff"/></g>
-    <!-- gage marker -->
-    <g id="gageMark" opacity="0"><line id="gageLine" x1="0" y1="0" x2="0" y2="0" stroke="#54e6e0" stroke-width="2" stroke-dasharray="3,3"/><circle id="gageDot" r="6" fill="none" stroke="#54e6e0" stroke-width="2"/><text id="gageTxt" font-size="9" fill="#54e6e0" font-weight="700"></text></g>
-    <text x="14" y="24" font-size="11" fill="#7d97ac">live watershed schematic</text>
+    <!-- gage marker at the catchment outlet -->
+    <g id="gageMark"><line x1="600" y1="306" x2="600" y2="324" stroke="#54e6e0" stroke-width="2" stroke-dasharray="3,3"/><circle cx="600" cy="332" r="6" fill="none" stroke="#54e6e0" stroke-width="2"/><text x="588" y="302" font-size="9" fill="#54e6e0" font-weight="700">▼ gage</text></g>
+    <text x="14" y="24" font-size="11" fill="#7d97ac">headwater catchment</text>
   </svg>`;
 }
 function updateWatershed(root,st){
@@ -573,38 +523,18 @@ function updateWatershed(root,st){
   q("#snowMid").style.opacity = clamp(swe*1.3-0.1,0,1);
   q("#snowLowA").style.opacity = clamp(swe*1.0-0.35,0,1);
   q("#snowLowB").style.opacity = clamp(swe*1.0-0.35,0,1);
-  // reservoir level
-  const top=248+4, full=56;
-  const lv=clamp(st.resLevel,0,1);
-  const hgt=6+full*lv;
-  const y=top+full- (hgt-6);
-  const rw=q("#resWater"); rw.setAttribute("y",y); rw.setAttribute("height",hgt);
-  rw.setAttribute("fill", st.flood?"#ff8a6b":"url(#water)");
-  // gate open
-  const g=q("#gate"); g.setAttribute("height",4+12*clamp(st.gateOpen,0,1));
   // stream hue intensity by flow (stay blue, vary brightness/width)
   const f=clamp(st.flow,0,1);
   const col=`rgb(${Math.round(40+lerp(0,40,f))},${Math.round(120+lerp(0,90,f))},${Math.round(180+lerp(0,70,f))})`;
-  ["#strA","#strB","#strC","#relStream","#confStream","#tribStream"].forEach(s=>{const e=q(s);e.setAttribute("stroke",col);});
-  q("#confStream").setAttribute("stroke-width",4+7*f);
-  q("#relStream").setAttribute("stroke-width",3+5*clamp(st.gateOpen,0,1));
+  ["#strA","#strB","#strC","#mainStem"].forEach(s=>{const e=q(s);if(e)e.setAttribute("stroke",col);});
+  q("#mainStem").setAttribute("stroke-width",4+7*f);
   // critters by season/state
-  const spring=st.season==="spring",summer=st.season==="summer",winter=st.season==="winter";
+  const spring=st.season==="spring",winter=st.season==="winter";
   q("#deer").style.opacity = (!winter)?0.95:0;
   q("#bfly").style.opacity = spring?1:0;
-  q("#fish").style.opacity = (lv>0.4&&!winter)?0.9:0;
-  q("#kayak").style.opacity = (lv>0.6&&summer)?0.95:0;
   q("#skier").style.opacity = (st.snowDeep)?0.95:0;
   q("#hare").style.opacity = (st.snowDeep)?0.9:0;
   q("#ws-sun").setAttribute("fill", winter?"#cfe3ff":"#ffd86b");
-  // gage marker
-  if(st.gage){
-    const pos={up:[250,250,"UP"],res:[404,300,"RES"],conf:[560,318,"CONF"]}[st.gage];
-    const gm=q("#gageMark");gm.style.opacity=1;
-    q("#gageDot").setAttribute("cx",pos[0]);q("#gageDot").setAttribute("cy",pos[1]);
-    const gl=q("#gageLine");gl.setAttribute("x1",pos[0]);gl.setAttribute("x2",pos[0]);gl.setAttribute("y1",pos[1]-26);gl.setAttribute("y2",pos[1]-8);
-    const tx=q("#gageTxt");tx.setAttribute("x",pos[0]-8);tx.setAttribute("y",pos[1]-30);tx.textContent="▼ gage "+pos[2];
-  }else if(q("#gageMark")){q("#gageMark").style.opacity=0;}
 }
 
 
@@ -612,7 +542,7 @@ function updateWatershed(root,st){
    CALIBRATION wiring
    ============================================================ */
 const calib=(function(){
-  let scale="event",gage="up";
+  let scale="event";
   function bind(id,fmt,fn){const el=$(id);const upd=()=>{if(fmt)$(fmt).textContent=fn?fn(el.value):el.value;runCalibrationDebounced();};el.addEventListener("input",upd);return upd;}
   const fmts=[
     ["sDDF","vDDF",v=>(+v).toFixed(1)+" mm/°C·d"],
@@ -633,8 +563,6 @@ const calib=(function(){
   // segmented
   $("cScale").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{
     $("cScale").querySelectorAll("button").forEach(x=>x.classList.remove("active"));b.classList.add("active");scale=b.dataset.v;runCalibration();}));
-  $("cGage").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{
-    $("cGage").querySelectorAll("button").forEach(x=>x.classList.remove("active"));b.classList.add("active");gage=b.dataset.v;runCalibration();}));
   $("cRegion").addEventListener("change",runCalibration);
   $("cReset").addEventListener("click",()=>{
     const defs={sDDF:4,sTsnow:0.5,sInf:18,sCap:150,sBase:0.06,sET:1,sRedist:0.08,sSoil0:2,sChan0:2};
@@ -651,7 +579,7 @@ const calib=(function(){
   });
   function getCfg(){
     return {
-      region:$("cRegion").value, scale, gage,
+      region:$("cRegion").value, scale,
       bands:$("cBands").classList.contains("on"),
       aspect:$("cAspect").classList.contains("on"),
       ddf:+$("sDDF").value, tsnow:+$("sTsnow").value,
@@ -662,7 +590,7 @@ const calib=(function(){
     };
   }
   function initLabels(){fmts.forEach(([a,b,f])=>$(b).textContent=f($(a).value));}
-  return {getCfg,initLabels,getScale:()=>scale,getGage:()=>gage};
+  return {getCfg,initLabels,getScale:()=>scale};
 })();
 calib.initLabels();
 
@@ -677,10 +605,10 @@ function runCalibration(autoMsg){
   const weather=genWeather(c.region,N,seed,c.scale);
   // TRUE config: full physics, correct warm state
   const trueCfg={N,weather,bands:true,aspect:true,ddf:4.2,tsnow:0.4,
-    inf:20,cap:140,base:0.07,et:1.0,redist:0.09,soil0:0.5,chan0:0.5,swe0: c.scale==="annual"?0:60,gw0:25,gage:c.gage};
+    inf:20,cap:140,base:0.07,et:1.0,redist:0.09,soil0:0.5,chan0:0.5,swe0: c.scale==="annual"?0:60,gw0:25};
   const simCfg={N,weather,bands:c.bands,aspect:c.aspect,ddf:c.ddf,tsnow:c.tsnow,
     inf:c.inf,cap:c.cap,base:c.base,et:c.et,redist:c.redist,soil0:c.soil0,chan0:c.chan0,
-    swe0:c.scale==="annual"?0:60,gw0:25,gage:c.gage};
+    swe0:c.scale==="annual"?0:60,gw0:25};
   const T=simulate(trueCfg), S=simulate(simCfg);
   const score=nse(S.flow,T.flow);
 
@@ -742,18 +670,14 @@ function runCalibration(autoMsg){
   // watershed viz state from end-of-run
   const last=N-1;
   const maxFlow=Math.max(fmax(T.flow),1);
-  const maxRes=Math.max(fmax(T.resOut),1);
   const doy=( (c.scale==="annual"?274:(REGIONS[c.region].snowy?60:150)) +last)%365;
   let season="summer";
   if(doy>330||doy<60)season="winter";else if(doy<150)season="spring";else if(doy>270)season="fall";
   const sweNorm=clamp(S.swe[last]/120,0,1);
   updateWatershed($("watershed"),{
     swe:sweNorm,
-    resLevel:clamp(T.resVol[last]/RES_CAP,0,1),
     flow:clamp(S.flow[last]/maxFlow,0,1),
-    gateOpen:c.gage==="res"||c.gage==="conf"?clamp(T.resOut[last]/maxRes,0,1):0.3,
-    season, snowDeep:sweNorm>0.5, gage:c.gage,
-    flood:false
+    season, snowDeep:sweNorm>0.5
   });
 }
 $("watershed").innerHTML=watershedSVG();

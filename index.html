@@ -594,8 +594,11 @@ const calib=(function(){
 })();
 calib.initLabels();
 
-let calibTimer=null;
-function runCalibrationDebounced(){clearTimeout(calibTimer);calibTimer=setTimeout(()=>runCalibration(),60);}
+// Live update: coalesce redraws to one per animation frame so the hydrograph
+// tracks the slider continuously during a drag (no 60ms "pause to see it" lag),
+// while never queuing redundant sims. Value labels update synchronously in bind().
+let calibRAF=null;
+function runCalibrationDebounced(){if(calibRAF!==null)return;calibRAF=requestAnimationFrame(()=>{calibRAF=null;runCalibration();});}
 
 function runCalibration(autoMsg){
   if(!$("calib").classList.contains("active"))return;

@@ -176,15 +176,15 @@
 
       <div class="group-title">Soil — two-bucket <i class="info">i<span class="tip">Root zone handles infiltration, ET, and redistribution; deep groundwater handles baseflow recession. Rain+melt that can't infiltrate becomes quick runoff.</span></i></div>
       <label class="ctl"><div class="lab"><span>Infiltration rate <i class="info">i<span class="tip">Max water/day the soil can absorb. Too low → unrealistic flashy peaks and near-zero summer baseflow.</span></i></span><span class="val" id="vInf"></span></div>
-        <input type="range" id="sInf" min="2" max="40" step="0.5" value="18"></label>
+        <input type="range" id="sInf" min="2" max="40" step="1" value="18"></label>
       <label class="ctl"><div class="lab"><span>Storage capacity <i class="info">i<span class="tip">Root-zone volume. Set too high → the watershed acts like a sponge and never reaches the target outlet flow.</span></i></span><span class="val" id="vCap"></span></div>
         <input type="range" id="sCap" min="40" max="320" step="5" value="150"></label>
       <label class="ctl"><div class="lab"><span>Baseflow recession rate <i class="info">i<span class="tip">Linear-reservoir constant: baseflow = k·(groundwater storage). Higher = flashier baseflow; lower = long sustained recession.</span></i></span><span class="val" id="vBase"></span></div>
-        <input type="range" id="sBase" min="0.01" max="0.3" step="0.005" value="0.06"></label>
+        <input type="range" id="sBase" min="0.01" max="0.3" step="0.01" value="0.06"></label>
       <label class="ctl"><div class="lab"><span>Evapotranspiration loss <i class="info">i<span class="tip">Scales the evapotranspiration demand drawn from the root zone. Higher ET lowers summer baseflow; set it too high and the whole hydrograph sits below the truth.</span></i></span><span class="val" id="vET"></span></div>
-        <input type="range" id="sET" min="0" max="2.5" step="0.05" value="1"></label>
+        <input type="range" id="sET" min="0" max="2.5" step="0.5" value="1"></label>
       <label class="ctl"><div class="lab"><span>Inter-event redistribution <i class="info">i<span class="tip">Drainage of the root zone toward groundwater between storms — controls how the soil "resets" before the next event.</span></i></span><span class="val" id="vRedist"></span></div>
-        <input type="range" id="sRedist" min="0" max="0.4" step="0.005" value="0.08"></label>
+        <input type="range" id="sRedist" min="0" max="0.4" step="0.01" value="0.08"></label>
 
       <div class="group-title">Routing — fixed <i class="info">i<span class="tip">Simple Lag/K routing (travel-time lag + linear-reservoir attenuation). Not tunable here — channel roughness/velocity/lag tuning is reserved for an advanced flood-mapping version.</span></i></div>
       <div class="small muted">Lag/K routing is held fixed in this version.</div>

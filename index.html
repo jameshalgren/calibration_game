@@ -160,7 +160,7 @@
         </div>
       </label>
 
-      <div class="group-title">Snow — temperature-index <i class="info">i<span class="tip">Degree-day model: melt = DDF·(T−T₀) when T&gt;T₀. Elevation bands apply a lapse rate (colder up high); aspect splits melt (south slopes melt faster). The True run uses all bands + aspect.</span></i></div>
+      <div class="group-title">Structural &amp; warm-state choices — held out <i class="info">i<span class="tip">These four fix the model structure and its starting (warm) state. The auto-tuner never touches them — so if a structural knob is OFF or a warm state is wrong, no amount of slider tuning recovers the truth. That's the calibration trap.</span></i></div>
       <div class="switch on" id="cBands" data-k="bands">
         <div><div class="name">Elevation bands (low/mid/high)</div><div class="meta">OFF = uniform melt — the missing knob</div></div>
         <div class="tg"></div>
@@ -169,6 +169,12 @@
         <div><div class="name">Aspect (N/S slopes) <i class="info">i<span class="tip">A pure degree-day model has no explicit energy-flux term — so how can aspect matter? Here aspect is applied as a melt-rate multiplier: north-facing slopes × 0.4 (slow, retained late), south-facing × 1.4 (fast, early). That's a lumped stand-in for differential solar exposure. The resulting two-timescale melt shape is exactly what a single uniform melt rate can't reproduce — which is why toggling aspect moves the NSE.</span></i></div><div class="meta">OFF = no solar split — the missing knob</div></div>
         <div class="tg"></div>
       </div>
+      <label class="ctl"><div class="lab"><span>Initial snowpack — SWE <i class="info">i<span class="tip">Snow water equivalent on the ground at day 0 (mm). A short-term warm state: a wrong value throws off the early melt limb but washes out once the model spins up its own snowpack over a full water year — so it bites a forecast, not an annual run. Held out of the auto-tuner. Correct value follows the scenario (event 60, annual 0).</span></i></span><span class="val" id="vSWE0"></span></div>
+        <input type="range" id="sSWE0" min="0" max="120" step="20" value="60"></label>
+      <label class="ctl"><div class="lab"><span>Initial soil moisture <i class="info">i<span class="tip">Root-zone wetness at day 0, as a percent of capacity. Held out of the auto-tuner — a wrong warm-up state can't be fixed by tuning soil/snow parameters. The True run starts from the correct balanced state (50%).</span></i></span><span class="val" id="vSoil0"></span></div>
+        <input type="range" id="sSoil0" min="0" max="4" step="1" value="2"></label>
+
+      <div class="group-title">Snow — temperature-index (tunable) <i class="info">i<span class="tip">Degree-day model: melt = DDF·(T−T₀) when T&gt;T₀. Elevation bands and aspect (above) shape where and how fast the pack melts; these two sliders are what the auto-tuner searches.</span></i></div>
       <label class="ctl"><div class="lab"><span>Degree-day melt factor (DDF) <i class="info">i<span class="tip">Degree-day factor: melt = DDF·(T − T₀) for each °C the air sits above the snow/rain threshold T₀. Higher DDF melts the pack faster once it's above freezing; too high and the melt limb spikes early and runs dry.</span></i></span><span class="val" id="vDDF"></span></div>
         <input type="range" id="sDDF" min="1" max="8" step="0.1" value="4"></label>
       <label class="ctl"><div class="lab"><span>Snow/rain temperature threshold <i class="info">i<span class="tip">The temperature that divides snow from rain, and the cutoff below which no melt occurs. Nudging it shifts both the timing and the volume of the melt-driven rise. This is an approximation because different energy dynamics may permit melt above or below the given temperature.</span></i></span><span class="val" id="vTsnow"></span></div>
@@ -186,21 +192,25 @@
       <label class="ctl"><div class="lab"><span>Inter-event redistribution <i class="info">i<span class="tip">Drainage of the root zone toward groundwater between storms — controls how the soil "resets" before the next event.</span></i></span><span class="val" id="vRedist"></span></div>
         <input type="range" id="sRedist" min="0" max="0.4" step="0.01" value="0.08"></label>
 
-      <div class="group-title">Routing — fixed <i class="info">i<span class="tip">Simple Lag/K routing (travel-time lag + linear-reservoir attenuation). Not tunable here — channel roughness/velocity/lag tuning is reserved for an advanced flood-mapping version.</span></i></div>
+      <!-- TODO(doLater #10): Routing (Lag/K) and the Initial channel storage warm
+           state were pulled off the interface to keep the calibration lesson focused.
+           The Lag/K sim (routeLagK, fixed lag=2 K=3) still runs internally. Reintroduce
+           the channel warm state later with a soil-moisture-linked initialization
+           (antecedent wetness -> channel quartile). Original markup preserved below:
+      <div class="group-title">Routing — fixed</div>
       <div class="small muted">Lag/K routing is held fixed in this version.</div>
-
-      <div class="group-title">Prior states (warm vs cold) <i class="info">i<span class="tip">Percent of each storage's full capacity at t=0. The True run starts from the correct balanced warm state. A wrong start cannot be fixed by any slider during warm-up.</span></i></div>
-      <label class="ctl"><div class="lab"><span>Initial soil moisture</span><span class="val" id="vSoil0"></span></div>
-        <input type="range" id="sSoil0" min="0" max="4" step="1" value="2"></label>
       <label class="ctl"><div class="lab"><span>Initial channel storage</span><span class="val" id="vChan0"></span></div>
         <input type="range" id="sChan0" min="0" max="4" step="1" value="2"></label>
+      -->
 
       <hr class="sep">
       <div class="row">
-        <button class="btn" id="cAutoTrue">Reveal best-possible fit</button>
+        <button class="btn" id="cAutoFit">Find best fit parameters <i class="info">i<span class="tip">Within your current structural choices (elevation bands, aspect) and warm state (initial SWE, soil moisture), this searches the tunable sliders for the highest achievable NSE. If a knob is OFF or a warm state is wrong, the best fit is still short of the truth — the honest ceiling for that setup. That's the calibration trap.</span></i></button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn ghost" id="cAutoTrue">Load perfect parameters <i class="info">i<span class="tip">The impossible hypothetical: loads the true parameters, the correct warm state, and full structure (bands + aspect ON) for NSE ≈ 1. Then break one element at a time — toggle a knob off or move a warm state — to see how much fit each element is worth.</span></i></button>
         <button class="btn ghost" id="cReset">Reset knobs</button>
       </div>
-      <div class="small muted" style="margin-top:8px">“Best-possible fit” auto-tunes the soil/snow sliders — proving that with a knob missing or a wrong warm state, the NSE still won't recover.</div>
     </div>
 
     <!-- RIGHT: viz + charts -->
@@ -552,8 +562,8 @@ const calib=(function(){
     ["sBase","vBase",v=>(+v).toFixed(3)],
     ["sET","vET",v=>(+v).toFixed(2)],
     ["sRedist","vRedist",v=>(+v).toFixed(3)],
+    ["sSWE0","vSWE0",v=>(+v).toFixed(0)+" mm"],
     ["sSoil0","vSoil0",v=>["0%","25%","50%","75%","100%"][v]],
-    ["sChan0","vChan0",v=>["0%","25%","50%","75%","100%"][v]],
   ];
   const updaters=fmts.map(([a,b,f])=>bind(a,b,f));
   // toggles
@@ -562,20 +572,34 @@ const calib=(function(){
   });
   // segmented
   $("cScale").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{
-    $("cScale").querySelectorAll("button").forEach(x=>x.classList.remove("active"));b.classList.add("active");scale=b.dataset.v;runCalibration();}));
+    $("cScale").querySelectorAll("button").forEach(x=>x.classList.remove("active"));b.classList.add("active");scale=b.dataset.v;
+    $("sSWE0").value=scale==="event"?60:0; // correct warm state follows the scenario
+    fmts.forEach(([a,bb,f])=>$(bb).textContent=f($(a).value));
+    runCalibration();}));
   $("cRegion").addEventListener("change",runCalibration);
   $("cReset").addEventListener("click",()=>{
-    const defs={sDDF:4,sTsnow:0.5,sInf:18,sCap:150,sBase:0.06,sET:1,sRedist:0.08,sSoil0:2,sChan0:2};
+    const defs={sDDF:4,sTsnow:0.5,sInf:18,sCap:150,sBase:0.06,sET:1,sRedist:0.08,sSoil0:2};
     for(const k in defs)$(k).value=defs[k];
+    $("sSWE0").value=scale==="event"?60:0; // correct warm state for the current scenario
     $("cBands").classList.add("on");$("cAspect").classList.add("on");
-    updaters.forEach(u=>{});fmts.forEach(([a,b,f])=>$(b).textContent=f($(a).value));
+    fmts.forEach(([a,b,f])=>$(b).textContent=f($(a).value));
     runCalibration();
   });
+  // "Load perfect parameters" — the impossible hypothetical: truth params + correct
+  // warm state + full structure ON. NSE≈1 baseline to degrade from, element by element.
   $("cAutoTrue").addEventListener("click",()=>{
-    // auto-tune soil/snow toward truth (but cannot fix missing knobs / wrong warm state)
     $("sDDF").value=4.2;$("sTsnow").value=0.4;$("sInf").value=20;$("sCap").value=140;$("sBase").value=0.07;$("sET").value=1.0;$("sRedist").value=0.09;
+    $("sSoil0").value=2;$("sSWE0").value=scale==="event"?60:0; // correct warm state
+    $("cBands").classList.add("on");$("cAspect").classList.add("on"); // full structure
     fmts.forEach(([a,b,f])=>$(b).textContent=f($(a).value));
-    runCalibration(true);
+    runCalibration("perfect");
+  });
+  // "Find best fit parameters" — real constrained optimizer over the tunable grid,
+  // respecting the current structure toggles and holding the warm states fixed.
+  $("cAutoFit").addEventListener("click",()=>{
+    optimizeFit();
+    fmts.forEach(([a,b,f])=>$(b).textContent=f($(a).value));
+    runCalibration("optimized");
   });
   function getCfg(){
     return {
@@ -586,7 +610,7 @@ const calib=(function(){
       inf:+$("sInf").value, cap:+$("sCap").value, base:+$("sBase").value,
       et:+$("sET").value, redist:+$("sRedist").value,
       soil0:[0,.25,.5,.75,1][+$("sSoil0").value],
-      chan0:[0,.25,.5,.75,1][+$("sChan0").value],
+      swe0:+$("sSWE0").value,
     };
   }
   function initLabels(){fmts.forEach(([a,b,f])=>$(b).textContent=f($(a).value));}
@@ -600,18 +624,32 @@ calib.initLabels();
 let calibRAF=null;
 function runCalibrationDebounced(){if(calibRAF!==null)return;calibRAF=requestAnimationFrame(()=>{calibRAF=null;runCalibration();});}
 
-function runCalibration(autoMsg){
-  if(!$("calib").classList.contains("active"))return;
+// Shared context builder — weather + the fixed TRUE config for the current scenario.
+// Used by both the live redraw and the optimizer so the two never drift apart.
+function calibContext(){
   const c=calib.getCfg();
   const N=c.scale==="annual"?365:60;
   const seed=({rocky:11,missouri:22,sierra:33,tropics:44}[c.region])+(c.scale==="annual"?100:0);
   const weather=genWeather(c.region,N,seed,c.scale);
-  // TRUE config: full physics, correct warm state
+  const correctSWE=c.scale==="event"?60:0; // correct initial snowpack for this scenario
   const trueCfg={N,weather,bands:true,aspect:true,ddf:4.2,tsnow:0.4,
-    inf:20,cap:140,base:0.07,et:1.0,redist:0.09,soil0:0.5,chan0:0.5,swe0: c.scale==="annual"?0:60,gw0:25};
-  const simCfg={N,weather,bands:c.bands,aspect:c.aspect,ddf:c.ddf,tsnow:c.tsnow,
-    inf:c.inf,cap:c.cap,base:c.base,et:c.et,redist:c.redist,soil0:c.soil0,chan0:c.chan0,
-    swe0:c.scale==="annual"?0:60,gw0:25};
+    inf:20,cap:140,base:0.07,et:1.0,redist:0.09,soil0:0.5,swe0:correctSWE,gw0:25};
+  return {c,N,weather,correctSWE,trueCfg};
+}
+// Build a sim config from the current structural toggles + warm states, with an
+// optional override of the tunable soil/snow params (used by the optimizer).
+function simCfgFrom(ctx,tun){
+  const c=ctx.c, p=tun||c;
+  return {N:ctx.N,weather:ctx.weather,bands:c.bands,aspect:c.aspect,
+    ddf:p.ddf,tsnow:p.tsnow,inf:p.inf,cap:p.cap,base:p.base,et:p.et,redist:p.redist,
+    soil0:c.soil0,swe0:c.swe0,gw0:25};
+}
+
+function runCalibration(autoMsg){
+  if(!$("calib").classList.contains("active"))return;
+  const ctx=calibContext();
+  const c=ctx.c, N=ctx.N, trueCfg=ctx.trueCfg;
+  const simCfg=simCfgFrom(ctx);
   const T=simulate(trueCfg), S=simulate(simCfg);
   const score=nse(S.flow,T.flow);
 
@@ -654,7 +692,7 @@ function runCalibration(autoMsg){
   if(!c.bands)reasons.push("<strong>Elevation bands are OFF</strong> — melt is uniform, so the snowmelt limb can't match the multi-band truth");
   if(!c.aspect)reasons.push("<strong>Aspect is OFF</strong> — no N/S solar split, so melt timing is wrong");
   if(c.soil0<0.5-1e-9)reasons.push("a <strong>cold/dry soil start</strong> — early flow stays low while the truth is already flowing, and no slider fixes a wrong warm-up state");
-  if(c.chan0<0.5-1e-9)reasons.push("a <strong>low initial channel storage</strong> — the system starts behind the truth");
+  if(c.swe0!==ctx.correctSWE)reasons.push("a <strong>wrong initial snowpack (SWE)</strong> — the early melt limb starts from the wrong place, and no slider fixes a wrong warm-up state (it washes out only after a full water year)");
   if(score>0.8){
     b.className="banner good small";
     b.innerHTML="✅ Strong match. The knobs are present and the warm state is right — now tuning actually works.";
@@ -665,9 +703,14 @@ function runCalibration(autoMsg){
     b.className="banner small";
     b.innerHTML="Knobs present &amp; warm state correct — keep tuning soil/snow sliders to push the NSE up.";
   }
-  if(autoMsg){
-    b.className="banner bad small";
-    b.innerHTML="Auto-tuned the soil &amp; snow sliders to their best values. "+(reasons.length?("But "+reasons.length+" structural issue(s) remain ("+ (!c.bands||!c.aspect?"missing physics knob":"wrong warm state") +"), so NSE still can't recover. Turn the right knobs ON / fix the prior state."):"With knobs on and the warm state right, the fit is strong.");
+  if(autoMsg==="perfect"){
+    b.className="banner good small";
+    b.innerHTML="Loaded the <strong>perfect parameters</strong> — true values, correct warm state, full structure ON (NSE ≈ "+score.toFixed(2)+"). This is the impossible hypothetical. Now break one element — toggle a knob off, or move a warm state — and watch how far the ceiling drops.";
+  }else if(autoMsg==="optimized"){
+    b.className=reasons.length?"banner bad small":"banner good small";
+    b.innerHTML=reasons.length
+      ? "Found the <strong>best achievable fit</strong> for this setup: NSE ceiling ≈ "+score.toFixed(2)+". It's still short of the truth because of structural / warm-state problems: "+reasons.join("; ")+". No slider tuning can lift this ceiling — that's the calibration trap."
+      : "Found the <strong>best fit</strong>: NSE ≈ "+score.toFixed(2)+". With the structure present and the warm state right, tuning the sliders reaches the truth.";
   }
 
   // watershed viz state from end-of-run
@@ -683,6 +726,47 @@ function runCalibration(autoMsg){
     season, snowDeep:sweNorm>0.5
   });
 }
+
+/* ============================================================
+   CONSTRAINED OPTIMIZER — "Find best fit parameters"
+   Coordinate descent over the discrete tunable-slider grid, maximizing NSE
+   against the current True series. Honors the current structural toggles
+   (bands/aspect) and holds the warm states (soil0, swe0, gw0) fixed, so a
+   missing knob or wrong warm state yields the provable ceiling, not the truth.
+   ============================================================ */
+const OPT_KEYS=["ddf","tsnow","inf","cap","base","et","redist"];
+const OPT_SID={ddf:"sDDF",tsnow:"sTsnow",inf:"sInf",cap:"sCap",base:"sBase",et:"sET",redist:"sRedist"};
+function optimizeFit(){
+  const ctx=calibContext();
+  const T=simulate(ctx.trueCfg).flow; // fixed target — compute once
+  // discrete grid for each tunable slider, read straight from its input attributes
+  const grid={};
+  OPT_KEYS.forEach(k=>{const el=$(OPT_SID[k]),mn=+el.min,mx=+el.max,st=+el.step,a=[];
+    for(let v=mn;v<=mx+1e-9;v+=st)a.push(+v.toFixed(6));grid[k]=a;});
+  const scoreOf=p=>nse(simulate(simCfgFrom(ctx,p)).flow,T);
+  function descend(start){
+    const p=Object.assign({},start);
+    let best=scoreOf(p);
+    for(let pass=0;pass<8;pass++){
+      let improved=false;
+      for(const k of OPT_KEYS){
+        let bv=p[k],bs=best;
+        for(const v of grid[k]){ if(v===p[k])continue;
+          const s=scoreOf(Object.assign({},p,{[k]:v})); if(s>bs+1e-9){bs=s;bv=v;} }
+        if(bv!==p[k]){p[k]=bv;best=bs;improved=true;}
+      }
+      if(!improved)break;
+    }
+    return {p,best};
+  }
+  // multi-start: from the current slider values and from the reset defaults; keep the better
+  const cur={ddf:+$("sDDF").value,tsnow:+$("sTsnow").value,inf:+$("sInf").value,cap:+$("sCap").value,base:+$("sBase").value,et:+$("sET").value,redist:+$("sRedist").value};
+  const def={ddf:4,tsnow:0.5,inf:18,cap:150,base:0.06,et:1,redist:0.08};
+  const A=descend(cur), B=descend(def);
+  const win=(B.best>A.best)?B.p:A.p;
+  OPT_KEYS.forEach(k=>$(OPT_SID[k]).value=win[k]);
+}
+
 $("watershed").innerHTML=watershedSVG();
 
 

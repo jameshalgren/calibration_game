@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hydrologic Calibration — Headwaters</title>
+<title>Headwater Calibration Game</title>
 <style>
   :root{
     --bg:#0b1118; --bg2:#111b27; --panel:#16222f; --panel2:#1c2c3d;
@@ -102,6 +102,8 @@
   .banner{border-left:4px solid var(--amber);background:linear-gradient(90deg,rgba(255,200,87,.14),transparent);padding:12px 16px;border-radius:8px;line-height:1.5;font-size:13.5px}
   .banner.good{border-color:var(--green);background:linear-gradient(90deg,rgba(84,214,160,.14),transparent)}
   .banner.bad{border-color:var(--red);background:linear-gradient(90deg,rgba(255,107,107,.14),transparent)}
+  /* B-1: reserve a constant height so the chart below never jumps as the message length changes */
+  #calibBanner{height:100px;overflow-y:auto;box-sizing:border-box}
 
   /* layout split */
   .split{display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start}
@@ -134,7 +136,7 @@
     Headwaters · Calibration
   </div>
   <span class="spacer"></span>
-  <span class="pill muted small">teaching toy · v3</span>
+  <span class="pill muted small">calibration jumpstarter · v3</span>
 </nav>
 <div class="wrap">
 <section id="calib" class="view active">
@@ -142,7 +144,7 @@
     <!-- LEFT: controls -->
     <div class="card panel-scroll">
       <h3 style="font-size:15px">Model Calibration</h3>
-      <div class="muted small">Match the hidden <strong>True</strong> hydrograph. The truth uses full physics &amp; the correct warm state.</div>
+      <div class="muted small">Match the hidden <strong>True</strong> hydrograph. A perfect match needs the right physics and the correct warm state.</div>
 
       <div class="group-title">Climate & run</div>
       <label class="ctl"><div class="lab"><span>Region preset</span></div>
@@ -161,7 +163,7 @@
         </div>
       </label>
 
-      <div class="group-title">Structural &amp; warm-state choices — held out <i class="info">i<span class="tip">These four fix the model structure and its starting (warm) state. The auto-tuner never touches them — so if a structural knob is OFF or a warm state is wrong, no amount of slider tuning recovers the truth. That's the calibration trap.</span></i></div>
+      <div class="group-title">Structural &amp; warm-state choices — held out <i class="info">i<span class="tip">These four fix the model structure and its starting (warm) state. The auto-tuner never touches them — so if a structural knob is OFF or a warm state is wrong, no amount of slider tuning recovers the truth. Without the right process represented, the model simply can't reproduce the watershed's real response.</span></i></div>
       <div class="switch on" id="cBands" data-k="bands">
         <div><div class="name">Elevation bands (low/mid/high)</div><div class="meta">OFF = uniform melt — the missing knob</div></div>
         <div class="tg"></div>
@@ -701,7 +703,7 @@ function runCalibration(autoMsg){
     b.innerHTML="✅ Strong match. The knobs are present and the warm state is right — now tuning actually works.";
   }else if(reasons.length){
     b.className="banner bad small";
-    b.innerHTML="🔧 The NSE is held down by structural problems, not just slider values: "+reasons.join("; ")+". This is the calibration trap — the <em>missing knob</em>, not the wrong knob.";
+    b.innerHTML="🔧 The NSE is held down by structural problems, not just slider values: "+reasons.join("; ")+". The <em>missing knob</em>, not the wrong knob.";
   }else{
     b.className="banner small";
     b.innerHTML="Knobs present &amp; warm state correct — keep tuning soil/snow sliders to push the NSE up.";
@@ -712,8 +714,8 @@ function runCalibration(autoMsg){
   }else if(autoMsg==="optimized"){
     b.className=reasons.length?"banner bad small":"banner good small";
     b.innerHTML=reasons.length
-      ? "Found the <strong>best achievable fit</strong> for this setup: NSE ceiling ≈ "+score.toFixed(2)+". It's still short of the truth because of structural / warm-state problems: "+reasons.join("; ")+". No slider tuning can lift this ceiling — that's the calibration trap."
-      : "Found the <strong>best fit</strong>: NSE ≈ "+score.toFixed(2)+". With the structure present and the warm state right, tuning the sliders reaches the truth.";
+      ? "Found the <strong>best achievable fit</strong> for this setup: NSE ceiling ≈ "+score.toFixed(2)+". It's still short of the truth because of structural / warm-state problems: "+reasons.join("; ")+". No slider tuning can lift this ceiling: the model can't reproduce a response it has no process to represent."
+      : "Found the <strong>best fit</strong>: NSE ≈ "+score.toFixed(2)+".";
   }
 
   // watershed viz state from end-of-run
